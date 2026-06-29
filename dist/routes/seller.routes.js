@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.sellerRoutes = void 0;
+const express_1 = require("express");
+const roles_1 = require("../constants/roles");
+const seller_controller_1 = require("../controllers/seller.controller");
+const async_handler_1 = require("../middleware/async-handler");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+exports.sellerRoutes = (0, express_1.Router)();
+exports.sellerRoutes.use(auth_middleware_1.authenticate, (0, auth_middleware_1.requireActiveRole)(roles_1.Role.SELLER));
+exports.sellerRoutes.get("/store", (0, async_handler_1.asyncHandler)(seller_controller_1.SellerController.getStore));
+exports.sellerRoutes.post("/store", (0, async_handler_1.asyncHandler)(seller_controller_1.SellerController.saveStore));
+exports.sellerRoutes.put("/store", (0, async_handler_1.asyncHandler)(seller_controller_1.SellerController.saveStore));
+exports.sellerRoutes.get("/products", (0, async_handler_1.asyncHandler)(seller_controller_1.SellerController.getProducts));
+exports.sellerRoutes.post("/products", (0, async_handler_1.asyncHandler)(seller_controller_1.SellerController.createProduct));
+exports.sellerRoutes.put("/products/:id", (0, async_handler_1.asyncHandler)(seller_controller_1.SellerController.updateProduct));
+exports.sellerRoutes.delete("/products/:id", (0, async_handler_1.asyncHandler)(seller_controller_1.SellerController.deleteProduct));

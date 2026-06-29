@@ -1,10 +1,10 @@
 import "dotenv/config";
 import { createApp } from "./app";
 import { env } from "./config/env";
-import { seedLevelOneData } from "./services/seed.service";
+import { seedDemoData } from "./services/seed.service";
 
 async function main() {
-  await seedLevelOneData();
+  await seedDemoData();
 
   const app = createApp();
 

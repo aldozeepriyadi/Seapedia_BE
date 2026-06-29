@@ -7,6 +7,7 @@ type ProductRow = {
   store_id: string;
   seller_id: string;
   store_name: string;
+  store_description: string;
   name: string;
   description: string;
   price: number;
@@ -23,6 +24,7 @@ function mapProduct(row: ProductRow): Product {
     storeId: row.store_id,
     sellerId: row.seller_id,
     storeName: row.store_name,
+    storeDescription: row.store_description,
     name: row.name,
     description: row.description,
     price: Number(row.price),
@@ -40,6 +42,7 @@ const productSelect = `
     products.store_id,
     stores.seller_id,
     stores.store_name,
+    stores.description AS store_description,
     products.name,
     products.description,
     products.price,
@@ -100,6 +103,7 @@ export class ProductModel {
         store_id,
         (SELECT seller_id FROM stores WHERE stores.id = products.store_id) AS seller_id,
         (SELECT store_name FROM stores WHERE stores.id = products.store_id) AS store_name,
+        (SELECT description FROM stores WHERE stores.id = products.store_id) AS store_description,
         name,
         description,
         price,
@@ -150,6 +154,7 @@ export class ProductModel {
         store_id,
         (SELECT seller_id FROM stores WHERE stores.id = products.store_id) AS seller_id,
         (SELECT store_name FROM stores WHERE stores.id = products.store_id) AS store_name,
+        (SELECT description FROM stores WHERE stores.id = products.store_id) AS store_description,
         name,
         description,
         price,

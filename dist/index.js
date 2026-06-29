@@ -5,7 +5,7 @@ const app_1 = require("./app");
 const env_1 = require("./config/env");
 const seed_service_1 = require("./services/seed.service");
 async function main() {
-    await (0, seed_service_1.seedLevelOneData)();
+    await (0, seed_service_1.seedDemoData)();
     const app = (0, app_1.createApp)();
     app.listen(env_1.env.port, () => {
         console.log(`SEAPEDIA API ready on http://localhost:${env_1.env.port}`);

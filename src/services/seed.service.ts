@@ -57,7 +57,7 @@ async function ensureDemoStore(sellerId: string) {
       id,
       sellerId,
       "Seapedia Curated",
-      "Demo store untuk menampilkan katalog publik pada Level 1.",
+      "Demo store untuk katalog publik dan product management Level 2.",
     ],
   );
 
@@ -141,7 +141,7 @@ async function seedReviews() {
   ]);
 }
 
-export async function seedLevelOneData() {
+export async function seedDemoData() {
   await initializeDatabase();
 
   await ensureUser({
@@ -173,6 +173,13 @@ export async function seedLevelOneData() {
   });
 
   const storeId = await ensureDemoStore(seller.id);
+  await query(
+    `UPDATE stores
+     SET description = $2,
+         updated_at = NOW()
+     WHERE id = $1 AND description LIKE '%Level 1%'`,
+    [storeId, "Demo store untuk katalog publik dan product management Level 2."],
+  );
   await seedProducts(storeId);
   await seedReviews();
 }

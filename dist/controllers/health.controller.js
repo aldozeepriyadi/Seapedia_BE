@@ -5,7 +5,7 @@ class HealthController {
     static show(_req, res) {
         res.json({
             status: "ok",
-            service: "SEAPEDIA Level 1 API",
+            service: "SEAPEDIA Level 2 API",
             timestamp: new Date().toISOString(),
         });
     }

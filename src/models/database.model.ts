@@ -32,6 +32,7 @@ export type Product = {
   storeId: string;
   sellerId: string;
   storeName: string;
+  storeDescription: string;
   name: string;
   description: string;
   price: number;

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.seedLevelOneData = seedLevelOneData;
+exports.seedDemoData = seedDemoData;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const database_1 = require("../config/database");
 const roles_1 = require("../constants/roles");
@@ -49,7 +49,7 @@ async function ensureDemoStore(sellerId) {
         id,
         sellerId,
         "Seapedia Curated",
-        "Demo store untuk menampilkan katalog publik pada Level 1.",
+        "Demo store untuk katalog publik dan product management Level 2.",
     ]);
     const result = await (0, database_1.query)("SELECT id FROM stores WHERE seller_id = $1 LIMIT 1", [sellerId]);
     return result.rows[0].id;
@@ -118,7 +118,7 @@ async function seedReviews() {
         },
     ]);
 }
-async function seedLevelOneData() {
+async function seedDemoData() {
     await (0, database_1.initializeDatabase)();
     await ensureUser({
         username: "admin",
@@ -145,6 +145,10 @@ async function seedLevelOneData() {
         roles: [roles_1.Role.DRIVER],
     });
     const storeId = await ensureDemoStore(seller.id);
+    await (0, database_1.query)(`UPDATE stores
+     SET description = $2,
+         updated_at = NOW()
+     WHERE id = $1 AND description LIKE '%Level 1%'`, [storeId, "Demo store untuk katalog publik dan product management Level 2."]);
     await seedProducts(storeId);
     await seedReviews();
 }
