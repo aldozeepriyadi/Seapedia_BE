@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SellerController = void 0;
 const product_model_1 = require("../models/product.model");
+const order_model_1 = require("../models/order.model");
 const store_model_1 = require("../models/store.model");
 const seller_validator_1 = require("../validators/seller.validator");
 const defaultProductImage = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=80";
@@ -38,6 +39,10 @@ class SellerController {
         }
         const products = await product_model_1.ProductModel.findByStoreId(store.id);
         res.json({ store, products });
+    }
+    static async getOrders(req, res) {
+        const orders = await order_model_1.OrderModel.findSellerOrders(req.auth.userId);
+        res.json({ orders });
     }
     static async createProduct(req, res) {
         const store = await store_model_1.StoreModel.findBySellerId(req.auth.userId);

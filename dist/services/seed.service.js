@@ -10,6 +10,8 @@ const roles_1 = require("../constants/roles");
 const product_model_1 = require("../models/product.model");
 const review_model_1 = require("../models/review.model");
 const user_model_1 = require("../models/user.model");
+const address_model_1 = require("../models/address.model");
+const wallet_model_1 = require("../models/wallet.model");
 const id_service_1 = require("./id.service");
 async function ensureUser(input) {
     const existing = await user_model_1.UserModel.findByUsername(input.username);
@@ -132,7 +134,7 @@ async function seedDemoData() {
         password: "Seller123!",
         roles: [roles_1.Role.SELLER],
     });
-    await ensureUser({
+    const buyer = await ensureUser({
         username: "buyerdemo",
         displayName: "Demo Buyer",
         password: "Buyer123!",
@@ -151,4 +153,19 @@ async function seedDemoData() {
      WHERE id = $1 AND description LIKE '%Level 1%'`, [storeId, "Demo store untuk katalog publik dan product management Level 2."]);
     await seedProducts(storeId);
     await seedReviews();
+    const wallet = await wallet_model_1.WalletModel.getSummary(buyer.id);
+    if (wallet.balance === 0) {
+        await wallet_model_1.WalletModel.topUp(buyer.id, 1000000);
+    }
+    const addresses = await address_model_1.AddressModel.findManyByUser(buyer.id);
+    if (addresses.length === 0) {
+        await address_model_1.AddressModel.create(buyer.id, {
+            recipientName: "Demo Buyer",
+            phone: "081234567890",
+            addressLine: "Jl. SEAPEDIA Demo No. 1",
+            city: "Jakarta",
+            postalCode: "10110",
+            isPrimary: true,
+        });
+    }
 }

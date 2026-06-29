@@ -4,6 +4,8 @@ import { Role } from "../constants/roles";
 import { ProductModel } from "../models/product.model";
 import { ReviewModel } from "../models/review.model";
 import { UserModel } from "../models/user.model";
+import { AddressModel } from "../models/address.model";
+import { WalletModel } from "../models/wallet.model";
 import { createId } from "./id.service";
 
 async function ensureUser(input: {
@@ -158,7 +160,7 @@ export async function seedDemoData() {
     roles: [Role.SELLER],
   });
 
-  await ensureUser({
+  const buyer = await ensureUser({
     username: "buyerdemo",
     displayName: "Demo Buyer",
     password: "Buyer123!",
@@ -182,4 +184,21 @@ export async function seedDemoData() {
   );
   await seedProducts(storeId);
   await seedReviews();
+
+  const wallet = await WalletModel.getSummary(buyer.id);
+  if (wallet.balance === 0) {
+    await WalletModel.topUp(buyer.id, 1000000);
+  }
+
+  const addresses = await AddressModel.findManyByUser(buyer.id);
+  if (addresses.length === 0) {
+    await AddressModel.create(buyer.id, {
+      recipientName: "Demo Buyer",
+      phone: "081234567890",
+      addressLine: "Jl. SEAPEDIA Demo No. 1",
+      city: "Jakarta",
+      postalCode: "10110",
+      isPrimary: true,
+    });
+  }
 }

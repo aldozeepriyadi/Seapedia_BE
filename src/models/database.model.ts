@@ -43,6 +43,68 @@ export type Product = {
   updatedAt: string;
 };
 
+export type WalletTransaction = {
+  id: string;
+  userId: string;
+  type: "TOP_UP" | "PAYMENT" | "REFUND";
+  amount: number;
+  description: string;
+  createdAt: string;
+};
+
+export type BuyerAddress = {
+  id: string;
+  userId: string;
+  recipientName: string;
+  phone: string;
+  addressLine: string;
+  city: string;
+  postalCode: string;
+  isPrimary: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CartItem = {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  stock: number;
+  quantity: number;
+  subtotal: number;
+  storeId: string;
+  storeName: string;
+  image: string;
+};
+
+export type CartSummary = {
+  id: string;
+  userId: string;
+  storeId: string | null;
+  storeName: string | null;
+  items: CartItem[];
+  subtotal: number;
+};
+
+export type DeliveryMethod = "Instant" | "Next Day" | "Regular";
+
+export type OrderSummary = {
+  id: string;
+  buyerId: string;
+  buyerName: string;
+  sellerId: string;
+  storeId: string;
+  storeName: string;
+  deliveryMethod: DeliveryMethod;
+  deliveryFee: number;
+  subtotal: number;
+  ppn: number;
+  finalTotal: number;
+  status: string;
+  createdAt: string;
+};
+
 export type Database = {
   users: StoredUser[];
   reviews: StoredReview[];

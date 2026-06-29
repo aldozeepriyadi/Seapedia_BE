@@ -1,5 +1,6 @@
 import { Response } from "express";
 import { ProductModel } from "../models/product.model";
+import { OrderModel } from "../models/order.model";
 import { StoreModel } from "../models/store.model";
 import { AuthedRequest } from "../types/auth";
 import { productSchema, storeSchema } from "../validators/seller.validator";
@@ -55,6 +56,11 @@ export class SellerController {
 
     const products = await ProductModel.findByStoreId(store.id);
     res.json({ store, products });
+  }
+
+  static async getOrders(req: AuthedRequest, res: Response) {
+    const orders = await OrderModel.findSellerOrders(req.auth!.userId);
+    res.json({ orders });
   }
 
   static async createProduct(req: AuthedRequest, res: Response) {
