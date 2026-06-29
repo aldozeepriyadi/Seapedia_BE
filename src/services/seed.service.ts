@@ -143,10 +143,29 @@ async function seedReviews() {
   ]);
 }
 
+async function seedDiscounts(adminId: string) {
+  const expiryDate = new Date();
+  expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+
+  await query(
+    `INSERT INTO vouchers (id, code, discount_amount, expiry_date, remaining_usage, created_by)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (code) DO NOTHING`,
+    [createId("vcr"), "WELCOME50", 50000, expiryDate.toISOString(), 25, adminId],
+  );
+
+  await query(
+    `INSERT INTO promos (id, code, discount_amount, expiry_date, created_by)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (code) DO NOTHING`,
+    [createId("prm"), "PROMO25", 25000, expiryDate.toISOString(), adminId],
+  );
+}
+
 export async function seedDemoData() {
   await initializeDatabase();
 
-  await ensureUser({
+  const admin = await ensureUser({
     username: "admin",
     displayName: "SEAPEDIA Admin",
     password: "Admin123!",
@@ -184,6 +203,7 @@ export async function seedDemoData() {
   );
   await seedProducts(storeId);
   await seedReviews();
+  await seedDiscounts(admin.id);
 
   const wallet = await WalletModel.getSummary(buyer.id);
   if (wallet.balance === 0) {

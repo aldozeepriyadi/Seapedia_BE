@@ -16,3 +16,5 @@ sellerRoutes.post("/products", asyncHandler(SellerController.createProduct));
 sellerRoutes.put("/products/:id", asyncHandler(SellerController.updateProduct));
 sellerRoutes.delete("/products/:id", asyncHandler(SellerController.deleteProduct));
 sellerRoutes.get("/orders", asyncHandler(SellerController.getOrders));
+sellerRoutes.get("/reports/summary", asyncHandler(SellerController.getReport));
+sellerRoutes.post("/orders/:id/process", asyncHandler(SellerController.processOrder));

@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.adminRoutes = void 0;
+const express_1 = require("express");
+const roles_1 = require("../constants/roles");
+const admin_controller_1 = require("../controllers/admin.controller");
+const async_handler_1 = require("../middleware/async-handler");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+exports.adminRoutes = (0, express_1.Router)();
+exports.adminRoutes.use(auth_middleware_1.authenticate, (0, auth_middleware_1.requireActiveRole)(roles_1.Role.ADMIN));
+exports.adminRoutes.get("/vouchers", (0, async_handler_1.asyncHandler)(admin_controller_1.AdminController.listVouchers));
+exports.adminRoutes.post("/vouchers", (0, async_handler_1.asyncHandler)(admin_controller_1.AdminController.createVoucher));
+exports.adminRoutes.get("/vouchers/:id", (0, async_handler_1.asyncHandler)(admin_controller_1.AdminController.showVoucher));
+exports.adminRoutes.get("/promos", (0, async_handler_1.asyncHandler)(admin_controller_1.AdminController.listPromos));
+exports.adminRoutes.post("/promos", (0, async_handler_1.asyncHandler)(admin_controller_1.AdminController.createPromo));
+exports.adminRoutes.get("/promos/:id", (0, async_handler_1.asyncHandler)(admin_controller_1.AdminController.showPromo));

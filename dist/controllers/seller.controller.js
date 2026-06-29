@@ -44,6 +44,20 @@ class SellerController {
         const orders = await order_model_1.OrderModel.findSellerOrders(req.auth.userId);
         res.json({ orders });
     }
+    static async getReport(req, res) {
+        const report = await order_model_1.OrderModel.sellerReport(req.auth.userId);
+        res.json({ report });
+    }
+    static async processOrder(req, res) {
+        const order = await order_model_1.OrderModel.processBySeller(String(req.params.id), req.auth.userId);
+        if (!order) {
+            res.status(404).json({
+                message: "Order tidak ditemukan atau statusnya bukan Sedang Dikemas.",
+            });
+            return;
+        }
+        res.json({ order });
+    }
     static async createProduct(req, res) {
         const store = await store_model_1.StoreModel.findBySellerId(req.auth.userId);
         if (!store) {

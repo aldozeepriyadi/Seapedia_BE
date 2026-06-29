@@ -63,6 +63,24 @@ export class SellerController {
     res.json({ orders });
   }
 
+  static async getReport(req: AuthedRequest, res: Response) {
+    const report = await OrderModel.sellerReport(req.auth!.userId);
+    res.json({ report });
+  }
+
+  static async processOrder(req: AuthedRequest, res: Response) {
+    const order = await OrderModel.processBySeller(String(req.params.id), req.auth!.userId);
+
+    if (!order) {
+      res.status(404).json({
+        message: "Order tidak ditemukan atau statusnya bukan Sedang Dikemas.",
+      });
+      return;
+    }
+
+    res.json({ order });
+  }
+
   static async createProduct(req: AuthedRequest, res: Response) {
     const store = await StoreModel.findBySellerId(req.auth!.userId);
 

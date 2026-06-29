@@ -1,11 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BuyerController = void 0;
+const database_1 = require("../config/database");
 const checkout_service_1 = require("../services/checkout.service");
 const address_model_1 = require("../models/address.model");
 const cart_model_1 = require("../models/cart.model");
 const order_model_1 = require("../models/order.model");
 const wallet_model_1 = require("../models/wallet.model");
+const discount_model_1 = require("../models/discount.model");
 const http_error_1 = require("../utils/http-error");
 const buyer_validator_1 = require("../validators/buyer.validator");
 class BuyerController {
@@ -55,7 +57,16 @@ class BuyerController {
         if (cart.items.length === 0) {
             throw new http_error_1.HttpError(400, "Keranjang masih kosong.");
         }
-        res.json({ checkout: (0, checkout_service_1.calculateCheckout)(cart.subtotal, payload.deliveryMethod) });
+        const client = await database_1.pool.connect();
+        try {
+            const discount = await discount_model_1.DiscountModel.validateWithClient(client, payload.discountCode, cart.subtotal);
+            res.json({
+                checkout: (0, checkout_service_1.calculateCheckout)(cart.subtotal, payload.deliveryMethod, discount),
+            });
+        }
+        finally {
+            client.release();
+        }
     }
     static async checkout(req, res) {
         const payload = buyer_validator_1.checkoutSchema.parse(req.body);
@@ -63,6 +74,7 @@ class BuyerController {
             buyerId: req.auth.userId,
             addressId: payload.addressId,
             deliveryMethod: payload.deliveryMethod,
+            discountCode: payload.discountCode || undefined,
         });
         res.status(201).json(order);
     }

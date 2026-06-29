@@ -1,17 +1,28 @@
 import { pool } from "../config/database";
 import { DeliveryMethod, deliveryFees, OrderStatus, ppnRate } from "../constants/commerce";
 import { CartModel } from "../models/cart.model";
+import { DiscountModel } from "../models/discount.model";
 import { WalletModel } from "../models/wallet.model";
 import { HttpError } from "../utils/http-error";
 import { createId } from "./id.service";
 
-export function calculateCheckout(subtotal: number, deliveryMethod: DeliveryMethod) {
+export function calculateCheckout(
+  subtotal: number,
+  deliveryMethod: DeliveryMethod,
+  discount?: { code: string; type: "VOUCHER" | "PROMO"; discountAmount: number } | null,
+) {
   const deliveryFee = deliveryFees[deliveryMethod];
-  const ppn = Math.round(subtotal * ppnRate);
-  const finalTotal = subtotal + deliveryFee + ppn;
+  const discountAmount = discount?.discountAmount ?? 0;
+  const taxableAmount = Math.max(0, subtotal - discountAmount);
+  const ppn = Math.round(taxableAmount * ppnRate);
+  const finalTotal = taxableAmount + deliveryFee + ppn;
 
   return {
     subtotal,
+    discountCode: discount?.code ?? null,
+    discountType: discount?.type ?? null,
+    discountAmount,
+    taxableAmount,
     deliveryMethod,
     deliveryFee,
     ppn,
@@ -24,6 +35,7 @@ export async function createOrder(input: {
   buyerId: string;
   addressId: string;
   deliveryMethod: DeliveryMethod;
+  discountCode?: string;
 }) {
   const client = await pool.connect();
 
@@ -56,7 +68,13 @@ export async function createOrder(input: {
     }
 
     const subtotal = checkoutCart.items.reduce((total, item) => total + item.subtotal, 0);
-    const totals = calculateCheckout(subtotal, input.deliveryMethod);
+    const discount = await DiscountModel.validateWithClient(
+      client,
+      input.discountCode,
+      subtotal,
+      true,
+    );
+    const totals = calculateCheckout(subtotal, input.deliveryMethod, discount);
 
     const paid = await WalletModel.deductWithClient(
       client,
@@ -73,8 +91,8 @@ export async function createOrder(input: {
 
     await client.query(
       `INSERT INTO orders
-        (id, buyer_id, seller_id, store_id, address_id, delivery_method, delivery_fee, subtotal, ppn, final_total, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        (id, buyer_id, seller_id, store_id, address_id, delivery_method, delivery_fee, subtotal, ppn, final_total, discount_code, discount_type, discount_amount, taxable_amount, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
       [
         orderId,
         input.buyerId,
@@ -86,6 +104,10 @@ export async function createOrder(input: {
         totals.subtotal,
         totals.ppn,
         totals.finalTotal,
+        totals.discountCode,
+        totals.discountType,
+        totals.discountAmount,
+        totals.taxableAmount,
         OrderStatus.PACKING,
       ],
     );

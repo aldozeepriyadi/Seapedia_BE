@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { HealthController } from "../controllers/health.controller";
+import { adminRoutes } from "./admin.routes";
 import { authRoutes } from "./auth.routes";
 import { buyerRoutes } from "./buyer.routes";
 import { productRoutes } from "./product.routes";
@@ -9,6 +10,7 @@ import { sellerRoutes } from "./seller.routes";
 export const apiRoutes = Router();
 
 apiRoutes.get("/health", HealthController.show);
+apiRoutes.use("/admin", adminRoutes);
 apiRoutes.use("/auth", authRoutes);
 apiRoutes.use("/buyer", buyerRoutes);
 apiRoutes.use("/products", productRoutes);

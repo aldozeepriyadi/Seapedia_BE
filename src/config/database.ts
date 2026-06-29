@@ -152,6 +152,10 @@ export async function initializeDatabase() {
       subtotal INTEGER NOT NULL CHECK (subtotal >= 0),
       ppn INTEGER NOT NULL CHECK (ppn >= 0),
       final_total INTEGER NOT NULL CHECK (final_total >= 0),
+      discount_code TEXT,
+      discount_type TEXT,
+      discount_amount INTEGER NOT NULL DEFAULT 0 CHECK (discount_amount >= 0),
+      taxable_amount INTEGER NOT NULL DEFAULT 0 CHECK (taxable_amount >= 0),
       status TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -175,6 +179,30 @@ export async function initializeDatabase() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS vouchers (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL UNIQUE,
+      discount_amount INTEGER NOT NULL CHECK (discount_amount > 0),
+      expiry_date TIMESTAMPTZ NOT NULL,
+      remaining_usage INTEGER NOT NULL CHECK (remaining_usage >= 0),
+      created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS promos (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL UNIQUE,
+      discount_amount INTEGER NOT NULL CHECK (discount_amount > 0),
+      expiry_date TIMESTAMPTZ NOT NULL,
+      created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_code TEXT;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_type TEXT;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS taxable_amount INTEGER NOT NULL DEFAULT 0;
+
     CREATE INDEX IF NOT EXISTS idx_products_store_id ON products(store_id);
     CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id);
     CREATE INDEX IF NOT EXISTS idx_app_reviews_created_at ON app_reviews(created_at);
@@ -183,5 +211,7 @@ export async function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_orders_buyer_id ON orders(buyer_id);
     CREATE INDEX IF NOT EXISTS idx_orders_seller_id ON orders(seller_id);
     CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+    CREATE INDEX IF NOT EXISTS idx_vouchers_code ON vouchers(code);
+    CREATE INDEX IF NOT EXISTS idx_promos_code ON promos(code);
   `);
 }

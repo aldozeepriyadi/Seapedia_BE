@@ -5,15 +5,22 @@ exports.createOrder = createOrder;
 const database_1 = require("../config/database");
 const commerce_1 = require("../constants/commerce");
 const cart_model_1 = require("../models/cart.model");
+const discount_model_1 = require("../models/discount.model");
 const wallet_model_1 = require("../models/wallet.model");
 const http_error_1 = require("../utils/http-error");
 const id_service_1 = require("./id.service");
-function calculateCheckout(subtotal, deliveryMethod) {
+function calculateCheckout(subtotal, deliveryMethod, discount) {
     const deliveryFee = commerce_1.deliveryFees[deliveryMethod];
-    const ppn = Math.round(subtotal * commerce_1.ppnRate);
-    const finalTotal = subtotal + deliveryFee + ppn;
+    const discountAmount = discount?.discountAmount ?? 0;
+    const taxableAmount = Math.max(0, subtotal - discountAmount);
+    const ppn = Math.round(taxableAmount * commerce_1.ppnRate);
+    const finalTotal = taxableAmount + deliveryFee + ppn;
     return {
         subtotal,
+        discountCode: discount?.code ?? null,
+        discountType: discount?.type ?? null,
+        discountAmount,
+        taxableAmount,
         deliveryMethod,
         deliveryFee,
         ppn,
@@ -42,15 +49,16 @@ async function createOrder(input) {
             }
         }
         const subtotal = checkoutCart.items.reduce((total, item) => total + item.subtotal, 0);
-        const totals = calculateCheckout(subtotal, input.deliveryMethod);
+        const discount = await discount_model_1.DiscountModel.validateWithClient(client, input.discountCode, subtotal, true);
+        const totals = calculateCheckout(subtotal, input.deliveryMethod, discount);
         const paid = await wallet_model_1.WalletModel.deductWithClient(client, input.buyerId, totals.finalTotal, "Pembayaran order SEAPEDIA");
         if (!paid) {
             throw new http_error_1.HttpError(400, "Saldo wallet tidak cukup untuk checkout.");
         }
         const orderId = (0, id_service_1.createId)("ord");
         await client.query(`INSERT INTO orders
-        (id, buyer_id, seller_id, store_id, address_id, delivery_method, delivery_fee, subtotal, ppn, final_total, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`, [
+        (id, buyer_id, seller_id, store_id, address_id, delivery_method, delivery_fee, subtotal, ppn, final_total, discount_code, discount_type, discount_amount, taxable_amount, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`, [
             orderId,
             input.buyerId,
             checkoutCart.sellerId,
@@ -61,6 +69,10 @@ async function createOrder(input) {
             totals.subtotal,
             totals.ppn,
             totals.finalTotal,
+            totals.discountCode,
+            totals.discountType,
+            totals.discountAmount,
+            totals.taxableAmount,
             commerce_1.OrderStatus.PACKING,
         ]);
         for (const item of checkoutCart.items) {

@@ -11,7 +11,8 @@ exports.deliveryFees = {
     [exports.DeliveryMethod.NEXT_DAY]: 18000,
     [exports.DeliveryMethod.REGULAR]: 10000,
 };
-exports.ppnRate = 0.11;
+exports.ppnRate = 0.12;
 exports.OrderStatus = {
     PACKING: "Sedang Dikemas",
+    WAITING_DRIVER: "Menunggu Pengirim",
 };

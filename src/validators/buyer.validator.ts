@@ -30,4 +30,5 @@ export const checkoutSchema = z.object({
     DeliveryMethod.NEXT_DAY,
     DeliveryMethod.REGULAR,
   ]),
+  discountCode: z.string().trim().max(40).optional().or(z.literal("")),
 });

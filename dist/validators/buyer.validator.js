@@ -28,4 +28,5 @@ exports.checkoutSchema = zod_1.z.object({
         commerce_1.DeliveryMethod.NEXT_DAY,
         commerce_1.DeliveryMethod.REGULAR,
     ]),
+    discountCode: zod_1.z.string().trim().max(40).optional().or(zod_1.z.literal("")),
 });

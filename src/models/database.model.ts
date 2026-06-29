@@ -101,7 +101,20 @@ export type OrderSummary = {
   subtotal: number;
   ppn: number;
   finalTotal: number;
+  discountCode: string | null;
+  discountType: string | null;
+  discountAmount: number;
+  taxableAmount: number;
   status: string;
+  createdAt: string;
+};
+
+export type DiscountResource = {
+  id: string;
+  code: string;
+  discountAmount: number;
+  expiryDate: string;
+  remainingUsage?: number;
   createdAt: string;
 };
 

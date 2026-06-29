@@ -12,8 +12,9 @@ export const deliveryFees: Record<DeliveryMethod, number> = {
   [DeliveryMethod.REGULAR]: 10000,
 };
 
-export const ppnRate = 0.11;
+export const ppnRate = 0.12;
 
 export const OrderStatus = {
   PACKING: "Sedang Dikemas",
+  WAITING_DRIVER: "Menunggu Pengirim",
 } as const;

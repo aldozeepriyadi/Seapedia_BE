@@ -1,9 +1,11 @@
 import { Response } from "express";
+import { pool } from "../config/database";
 import { calculateCheckout, createOrder } from "../services/checkout.service";
 import { AddressModel } from "../models/address.model";
 import { CartModel } from "../models/cart.model";
 import { OrderModel } from "../models/order.model";
 import { WalletModel } from "../models/wallet.model";
+import { DiscountModel } from "../models/discount.model";
 import { AuthedRequest } from "../types/auth";
 import { HttpError } from "../utils/http-error";
 import {
@@ -76,7 +78,19 @@ export class BuyerController {
       throw new HttpError(400, "Keranjang masih kosong.");
     }
 
-    res.json({ checkout: calculateCheckout(cart.subtotal, payload.deliveryMethod) });
+    const client = await pool.connect();
+    try {
+      const discount = await DiscountModel.validateWithClient(
+        client,
+        payload.discountCode,
+        cart.subtotal,
+      );
+      res.json({
+        checkout: calculateCheckout(cart.subtotal, payload.deliveryMethod, discount),
+      });
+    } finally {
+      client.release();
+    }
   }
 
   static async checkout(req: AuthedRequest, res: Response) {
@@ -85,6 +99,7 @@ export class BuyerController {
       buyerId: req.auth!.userId,
       addressId: payload.addressId,
       deliveryMethod: payload.deliveryMethod,
+      discountCode: payload.discountCode || undefined,
     });
 
     res.status(201).json(order);

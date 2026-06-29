@@ -16,3 +16,5 @@ exports.sellerRoutes.post("/products", (0, async_handler_1.asyncHandler)(seller_
 exports.sellerRoutes.put("/products/:id", (0, async_handler_1.asyncHandler)(seller_controller_1.SellerController.updateProduct));
 exports.sellerRoutes.delete("/products/:id", (0, async_handler_1.asyncHandler)(seller_controller_1.SellerController.deleteProduct));
 exports.sellerRoutes.get("/orders", (0, async_handler_1.asyncHandler)(seller_controller_1.SellerController.getOrders));
+exports.sellerRoutes.get("/reports/summary", (0, async_handler_1.asyncHandler)(seller_controller_1.SellerController.getReport));
+exports.sellerRoutes.post("/orders/:id/process", (0, async_handler_1.asyncHandler)(seller_controller_1.SellerController.processOrder));
