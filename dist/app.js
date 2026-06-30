@@ -18,11 +18,23 @@ const allowedOrigins = new Set([
     "http://localhost:5175",
     "http://127.0.0.1:5175",
 ]);
+function isAllowedOrigin(origin) {
+    if (!origin || allowedOrigins.has(origin)) {
+        return true;
+    }
+    try {
+        const { hostname, protocol } = new URL(origin);
+        return protocol === "https:" && hostname.endsWith(".vercel.app");
+    }
+    catch {
+        return false;
+    }
+}
 function createApp() {
     const app = (0, express_1.default)();
     app.use((0, cors_1.default)({
         origin(origin, callback) {
-            if (!origin || allowedOrigins.has(origin)) {
+            if (isAllowedOrigin(origin)) {
                 callback(null, true);
                 return;
             }

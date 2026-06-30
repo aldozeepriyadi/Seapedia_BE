@@ -14,13 +14,27 @@ const allowedOrigins = new Set([
   "http://127.0.0.1:5175",
 ]);
 
+function isAllowedOrigin(origin?: string) {
+  if (!origin || allowedOrigins.has(origin)) {
+    return true;
+  }
+
+  try {
+    const { hostname, protocol } = new URL(origin);
+
+    return protocol === "https:" && hostname.endsWith(".vercel.app");
+  } catch {
+    return false;
+  }
+}
+
 export function createApp() {
   const app = express();
 
   app.use(
     cors({
       origin(origin, callback) {
-        if (!origin || allowedOrigins.has(origin)) {
+        if (isAllowedOrigin(origin)) {
           callback(null, true);
           return;
         }

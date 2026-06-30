@@ -5,9 +5,28 @@ exports.query = query;
 exports.initializeDatabase = initializeDatabase;
 const pg_1 = require("pg");
 const env_1 = require("./env");
-exports.pool = new pg_1.Pool({
-    connectionString: env_1.env.databaseUrl,
-});
+function needsSsl(connectionString) {
+    const url = new URL(connectionString);
+    return (url.searchParams.get("sslmode") === "require" ||
+        url.hostname.includes("supabase.co") ||
+        url.hostname.includes("pooler.supabase.com"));
+}
+function createPool(connectionString) {
+    const url = new URL(connectionString);
+    const ssl = needsSsl(connectionString);
+    url.searchParams.delete("sslmode");
+    return new pg_1.Pool({
+        connectionString: url.toString(),
+        ...(ssl
+            ? {
+                ssl: {
+                    rejectUnauthorized: false,
+                },
+            }
+            : {}),
+    });
+}
+exports.pool = createPool(env_1.env.databaseUrl);
 async function query(text, params = []) {
     return exports.pool.query(text, params);
 }
@@ -18,9 +37,7 @@ async function ensureDatabaseExists() {
         return;
     const maintenanceUrl = new URL(env_1.env.databaseUrl);
     maintenanceUrl.pathname = "/postgres";
-    const maintenancePool = new pg_1.Pool({
-        connectionString: maintenanceUrl.toString(),
-    });
+    const maintenancePool = createPool(maintenanceUrl.toString());
     try {
         const result = await maintenancePool.query("SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = $1) AS exists", [databaseName]);
         if (!result.rows[0]?.exists) {
@@ -40,6 +57,7 @@ async function initializeDatabase() {
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       username TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL UNIQUE,
       display_name TEXT NOT NULL,
       password_hash TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -204,6 +222,11 @@ async function initializeDatabase() {
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_type TEXT;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount INTEGER NOT NULL DEFAULT 0;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS taxable_amount INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
+    UPDATE users
+    SET email = LOWER(username) || '@seapedia.test'
+    WHERE email IS NULL OR email = '';
+    ALTER TABLE users ALTER COLUMN email SET NOT NULL;
     ALTER TABLE delivery_jobs DROP CONSTRAINT IF EXISTS delivery_jobs_status_check;
     ALTER TABLE delivery_jobs ADD CONSTRAINT delivery_jobs_status_check
       CHECK (status IN ('AVAILABLE', 'TAKEN', 'COMPLETED', 'RETURNED'));
@@ -219,6 +242,7 @@ async function initializeDatabase() {
     WHERE orders.status = 'Menunggu Pengirim' AND delivery_jobs.id IS NULL;
 
     CREATE INDEX IF NOT EXISTS idx_products_store_id ON products(store_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_lower ON users(LOWER(email));
     CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id);
     CREATE INDEX IF NOT EXISTS idx_app_reviews_created_at ON app_reviews(created_at);
     CREATE INDEX IF NOT EXISTS idx_buyer_addresses_user_id ON buyer_addresses(user_id);

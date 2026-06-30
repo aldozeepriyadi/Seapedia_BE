@@ -38,6 +38,36 @@ function mapDelivery(row) {
         completedAt: row.completed_at?.toISOString() ?? null,
     };
 }
+function mapUser(row) {
+    return {
+        id: row.id,
+        username: row.username,
+        email: row.email,
+        displayName: row.display_name,
+        roles: row.roles,
+        createdAt: row.created_at.toISOString(),
+    };
+}
+function mapStore(row) {
+    return {
+        id: row.id,
+        storeName: row.store_name,
+        sellerName: row.seller_name,
+        productCount: Number(row.product_count),
+        createdAt: row.created_at.toISOString(),
+    };
+}
+function mapProduct(row) {
+    return {
+        id: row.id,
+        name: row.name,
+        storeName: row.store_name,
+        category: row.category,
+        price: Number(row.price),
+        stock: Number(row.stock),
+        createdAt: row.created_at.toISOString(),
+    };
+}
 function mapOverdue(row) {
     return {
         id: row.id,
@@ -53,7 +83,7 @@ function mapOverdue(row) {
 }
 class AdminMonitoringModel {
     static async snapshot(now = new Date()) {
-        const [users, stores, products, orders, vouchers, promos, deliveryJobs, overdue, recentOrders, deliveryRows, overdueRows,] = await Promise.all([
+        const [users, stores, products, orders, vouchers, promos, deliveryJobs, overdue, userRows, storeRows, productRows, recentOrders, deliveryRows, overdueRows,] = await Promise.all([
             (0, database_1.query)("SELECT COUNT(*) AS count FROM users"),
             (0, database_1.query)("SELECT COUNT(*) AS count FROM stores"),
             (0, database_1.query)("SELECT COUNT(*) AS count FROM products"),
@@ -65,6 +95,42 @@ class AdminMonitoringModel {
          FROM orders
          WHERE status <> ALL($1::text[])
            AND ${slaExpression()} <= $2::timestamptz`, [orderStatusFinal, now.toISOString()]),
+            (0, database_1.query)(`SELECT
+          users.id,
+          users.username,
+          users.email,
+          users.display_name,
+          ARRAY_AGG(user_roles.role ORDER BY user_roles.role) AS roles,
+          users.created_at
+         FROM users
+         JOIN user_roles ON user_roles.user_id = users.id
+         GROUP BY users.id
+         ORDER BY users.created_at DESC
+         LIMIT 20`),
+            (0, database_1.query)(`SELECT
+          stores.id,
+          stores.store_name,
+          users.display_name AS seller_name,
+          COUNT(products.id) AS product_count,
+          stores.created_at
+         FROM stores
+         JOIN users ON users.id = stores.seller_id
+         LEFT JOIN products ON products.store_id = stores.id
+         GROUP BY stores.id, users.display_name
+         ORDER BY stores.created_at DESC
+         LIMIT 20`),
+            (0, database_1.query)(`SELECT
+          products.id,
+          products.name,
+          stores.store_name,
+          products.category,
+          products.price,
+          products.stock,
+          products.created_at
+         FROM products
+         JOIN stores ON stores.id = products.store_id
+         ORDER BY products.created_at DESC
+         LIMIT 20`),
             (0, database_1.query)(`SELECT
           orders.id,
           users.display_name AS buyer_name,
@@ -110,6 +176,9 @@ class AdminMonitoringModel {
             },
             slaRules: commerce_1.deliverySlaHours,
             now: now.toISOString(),
+            users: userRows.rows.map(mapUser),
+            stores: storeRows.rows.map(mapStore),
+            products: productRows.rows.map(mapProduct),
             recentOrders: recentOrders.rows.map(mapOrder),
             deliveryJobs: deliveryRows.rows.map(mapDelivery),
             overdueOrders: overdueRows.map(mapOverdue),
@@ -157,31 +226,32 @@ class AdminMonitoringModel {
          ORDER BY deadline_at ASC
          FOR UPDATE OF orders`, [orderStatusFinal, now.toISOString()]);
             for (const order of candidates.rows) {
-                await wallet_model_1.WalletModel.refundWithClient(client, order.buyer_id, Number(order.final_total), `Refund overdue order ${order.id}`);
+                await wallet_model_1.WalletModel.refundWithClient(client, order.buyer_id, Number(order.final_total), `Refund overdue order ${order.id}`, now);
                 await client.query(`UPDATE products
            SET stock = products.stock + order_items.quantity,
-               updated_at = NOW()
+               updated_at = $2
            FROM order_items
            WHERE order_items.order_id = $1
-             AND products.id = order_items.product_id`, [order.id]);
+             AND products.id = order_items.product_id`, [order.id, now.toISOString()]);
                 await client.query(`UPDATE orders
            SET status = $2,
-               updated_at = NOW()
-           WHERE id = $1`, [order.id, commerce_1.OrderStatus.RETURNED]);
+               updated_at = $3
+           WHERE id = $1`, [order.id, commerce_1.OrderStatus.RETURNED, now.toISOString()]);
                 await client.query(`UPDATE delivery_jobs
            SET status = $2,
-               completed_at = COALESCE(completed_at, NOW()),
-               updated_at = NOW()
+               completed_at = COALESCE(completed_at, $4),
+               updated_at = $4
            WHERE order_id = $1
-             AND status <> $3`, [order.id, commerce_1.DeliveryJobStatus.RETURNED, commerce_1.DeliveryJobStatus.COMPLETED]);
-                await client.query(`INSERT INTO order_status_history (id, order_id, status, note)
-           VALUES ($1, $2, $3, $4)`, [
+             AND status <> $3`, [order.id, commerce_1.DeliveryJobStatus.RETURNED, commerce_1.DeliveryJobStatus.COMPLETED, now.toISOString()]);
+                await client.query(`INSERT INTO order_status_history (id, order_id, status, note, created_at)
+           VALUES ($1, $2, $3, $4, $5)`, [
                     (0, id_service_1.createId)("osh"),
                     order.id,
                     commerce_1.OrderStatus.RETURNED,
                     `Admin overdue handling: refund ${Number(order.final_total)} dan stock dikembalikan. Simulated time ${now.toISOString()}.`,
+                    now.toISOString(),
                 ]);
-                processed.push(mapOverdue(order));
+                processed.push({ ...mapOverdue(order), status: commerce_1.OrderStatus.RETURNED });
             }
             await client.query("COMMIT");
             return {

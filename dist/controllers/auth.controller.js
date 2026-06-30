@@ -18,10 +18,16 @@ class AuthController {
             res.status(409).json({ message: "Username sudah digunakan." });
             return;
         }
+        const emailExists = await user_model_1.UserModel.existsByEmail(payload.email);
+        if (emailExists) {
+            res.status(409).json({ message: "Email sudah digunakan." });
+            return;
+        }
         const now = new Date().toISOString();
         const user = await user_model_1.UserModel.create({
             id: (0, id_service_1.createId)("usr"),
             username,
+            email: payload.email,
             displayName: payload.displayName,
             passwordHash: await bcrypt_1.default.hash(payload.password, 10),
             roles: payload.roles,
@@ -81,9 +87,10 @@ class AuthController {
             user: (0, auth_service_1.toPublicUser)(user, payload.role),
         });
     }
-    static logout(_req, res) {
+    static logout(req, res) {
+        (0, auth_service_1.revokeToken)(req.auth);
         res.json({
-            message: "Logout berhasil. Token JWT stateless, jadi client harus menghapus token dari storage.",
+            message: "Logout berhasil. Token aktif sudah direvoke dan client harus menghapus token dari storage.",
         });
     }
 }

@@ -4,6 +4,14 @@ exports.errorMiddleware = errorMiddleware;
 const zod_1 = require("zod");
 const http_error_1 = require("../utils/http-error");
 function errorMiddleware(error, _req, res, _next) {
+    if (error instanceof SyntaxError &&
+        "status" in error &&
+        error.status === 400 &&
+        "type" in error &&
+        error.type === "entity.parse.failed") {
+        res.status(400).json({ message: "JSON request body tidak valid." });
+        return;
+    }
     if (error instanceof zod_1.z.ZodError) {
         res.status(400).json({
             message: "Input tidak valid.",

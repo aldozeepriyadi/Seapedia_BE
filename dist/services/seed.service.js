@@ -15,12 +15,21 @@ const wallet_model_1 = require("../models/wallet.model");
 const id_service_1 = require("./id.service");
 async function ensureUser(input) {
     const existing = await user_model_1.UserModel.findByUsername(input.username);
-    if (existing)
+    if (existing) {
+        if (existing.email !== input.email) {
+            await (0, database_1.query)("UPDATE users SET email = $2, updated_at = NOW() WHERE id = $1", [
+                existing.id,
+                input.email,
+            ]);
+            return (await user_model_1.UserModel.findByUsername(input.username)) ?? existing;
+        }
         return existing;
+    }
     try {
         return await user_model_1.UserModel.create({
             id: (0, id_service_1.createId)("usr"),
             username: input.username,
+            email: input.email,
             displayName: input.displayName,
             passwordHash: await bcrypt_1.default.hash(input.password, 10),
             roles: input.roles,
@@ -134,24 +143,28 @@ async function seedDemoData() {
     await (0, database_1.initializeDatabase)();
     const admin = await ensureUser({
         username: "admin",
+        email: "admin@seapedia.test",
         displayName: "SEAPEDIA Admin",
         password: "Admin123!",
         roles: [roles_1.Role.ADMIN],
     });
     const seller = await ensureUser({
         username: "sellerdemo",
+        email: "seller@seapedia.test",
         displayName: "Demo Seller",
         password: "Seller123!",
         roles: [roles_1.Role.SELLER],
     });
     const buyer = await ensureUser({
         username: "buyerdemo",
+        email: "buyer@seapedia.test",
         displayName: "Demo Buyer",
         password: "Buyer123!",
         roles: [roles_1.Role.BUYER],
     });
     await ensureUser({
         username: "driverdemo",
+        email: "driver@seapedia.test",
         displayName: "Demo Driver",
         password: "Driver123!",
         roles: [roles_1.Role.DRIVER],

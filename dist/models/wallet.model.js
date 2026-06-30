@@ -61,15 +61,15 @@ class WalletModel {
        VALUES ($1, $2, 'PAYMENT', $3, $4)`, [(0, id_service_1.createId)("wtx"), userId, -amount, description]);
         return true;
     }
-    static async refundWithClient(client, userId, amount, description) {
+    static async refundWithClient(client, userId, amount, description, occurredAt = new Date()) {
         await client.query(`INSERT INTO buyer_wallets (user_id, balance)
        VALUES ($1, 0)
        ON CONFLICT (user_id) DO NOTHING`, [userId]);
         await client.query(`UPDATE buyer_wallets
-       SET balance = balance + $2, updated_at = NOW()
-       WHERE user_id = $1`, [userId, amount]);
-        await client.query(`INSERT INTO wallet_transactions (id, user_id, type, amount, description)
-       VALUES ($1, $2, 'REFUND', $3, $4)`, [(0, id_service_1.createId)("wtx"), userId, amount, description]);
+       SET balance = balance + $2, updated_at = $3
+       WHERE user_id = $1`, [userId, amount, occurredAt.toISOString()]);
+        await client.query(`INSERT INTO wallet_transactions (id, user_id, type, amount, description, created_at)
+       VALUES ($1, $2, 'REFUND', $3, $4, $5)`, [(0, id_service_1.createId)("wtx"), userId, amount, description, occurredAt.toISOString()]);
     }
 }
 exports.WalletModel = WalletModel;
