@@ -118,6 +118,28 @@ export type DiscountResource = {
   createdAt: string;
 };
 
+export type DeliveryJobSummary = {
+  id: string;
+  orderId: string;
+  orderStatus: string;
+  jobStatus: string;
+  driverId: string | null;
+  buyerName: string;
+  sellerId: string;
+  storeName: string;
+  deliveryMethod: DeliveryMethod;
+  deliveryFee: number;
+  earningAmount: number;
+  recipientName: string;
+  phone: string;
+  addressLine: string;
+  city: string;
+  postalCode: string;
+  createdAt: string;
+  takenAt: string | null;
+  completedAt: string | null;
+};
+
 export type Database = {
   users: StoredUser[];
   reviews: StoredReview[];

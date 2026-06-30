@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.driverRoutes = void 0;
+const express_1 = require("express");
+const roles_1 = require("../constants/roles");
+const driver_controller_1 = require("../controllers/driver.controller");
+const async_handler_1 = require("../middleware/async-handler");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+exports.driverRoutes = (0, express_1.Router)();
+exports.driverRoutes.use(auth_middleware_1.authenticate, (0, auth_middleware_1.requireActiveRole)(roles_1.Role.DRIVER));
+exports.driverRoutes.get("/jobs/available", (0, async_handler_1.asyncHandler)(driver_controller_1.DriverController.availableJobs));
+exports.driverRoutes.get("/jobs/active", (0, async_handler_1.asyncHandler)(driver_controller_1.DriverController.activeJob));
+exports.driverRoutes.get("/jobs/history", (0, async_handler_1.asyncHandler)(driver_controller_1.DriverController.jobHistory));
+exports.driverRoutes.get("/jobs/:id", (0, async_handler_1.asyncHandler)(driver_controller_1.DriverController.showJob));
+exports.driverRoutes.post("/jobs/:id/take", (0, async_handler_1.asyncHandler)(driver_controller_1.DriverController.takeJob));
+exports.driverRoutes.post("/jobs/:id/complete", (0, async_handler_1.asyncHandler)(driver_controller_1.DriverController.completeJob));
+exports.driverRoutes.get("/reports/summary", (0, async_handler_1.asyncHandler)(driver_controller_1.DriverController.report));

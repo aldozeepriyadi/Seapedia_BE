@@ -1,5 +1,5 @@
 import { query } from "../config/database";
-import { OrderStatus } from "../constants/commerce";
+import { DeliveryJobStatus, OrderStatus } from "../constants/commerce";
 import { createId } from "../services/id.service";
 import { OrderSummary } from "./database.model";
 
@@ -188,10 +188,10 @@ export class OrderModel {
         COALESCE(SUM(final_total - delivery_fee), 0) AS total_income,
         COALESCE(SUM(discount_amount), 0) AS total_discount,
         COUNT(*) FILTER (WHERE status = $2) AS pending_orders,
-        COUNT(*) FILTER (WHERE status = $3) AS processed_orders
+        COUNT(*) FILTER (WHERE status <> $2) AS processed_orders
        FROM orders
        WHERE seller_id = $1`,
-      [sellerId, OrderStatus.PACKING, OrderStatus.WAITING_DRIVER],
+      [sellerId, OrderStatus.PACKING],
     );
 
     return {
@@ -215,6 +215,13 @@ export class OrderModel {
         INSERT INTO order_status_history (id, order_id, status, note)
         SELECT $5, id, $3, 'Seller memproses order dan menunggu pengirim.'
         FROM updated_order
+        RETURNING id
+      ),
+      inserted_delivery_job AS (
+        INSERT INTO delivery_jobs (id, order_id, status, earning_amount)
+        SELECT $6, id, $7, delivery_fee
+        FROM updated_order
+        ON CONFLICT (order_id) DO NOTHING
         RETURNING id
       )
       SELECT
@@ -244,6 +251,8 @@ export class OrderModel {
         OrderStatus.WAITING_DRIVER,
         OrderStatus.PACKING,
         createId("osh"),
+        createId("dlj"),
+        DeliveryJobStatus.AVAILABLE,
       ],
     );
 

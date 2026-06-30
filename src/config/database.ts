@@ -179,6 +179,18 @@ export async function initializeDatabase() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS delivery_jobs (
+      id TEXT PRIMARY KEY,
+      order_id TEXT NOT NULL UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
+      driver_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+      status TEXT NOT NULL CHECK (status IN ('AVAILABLE', 'TAKEN', 'COMPLETED')),
+      earning_amount INTEGER NOT NULL DEFAULT 0 CHECK (earning_amount >= 0),
+      taken_at TIMESTAMPTZ,
+      completed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
     CREATE TABLE IF NOT EXISTS vouchers (
       id TEXT PRIMARY KEY,
       code TEXT NOT NULL UNIQUE,
@@ -203,6 +215,16 @@ export async function initializeDatabase() {
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount INTEGER NOT NULL DEFAULT 0;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS taxable_amount INTEGER NOT NULL DEFAULT 0;
 
+    INSERT INTO delivery_jobs (id, order_id, status, earning_amount)
+    SELECT
+      'dlj_' || substr(md5(orders.id), 1, 12),
+      orders.id,
+      'AVAILABLE',
+      orders.delivery_fee
+    FROM orders
+    LEFT JOIN delivery_jobs ON delivery_jobs.order_id = orders.id
+    WHERE orders.status = 'Menunggu Pengirim' AND delivery_jobs.id IS NULL;
+
     CREATE INDEX IF NOT EXISTS idx_products_store_id ON products(store_id);
     CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id);
     CREATE INDEX IF NOT EXISTS idx_app_reviews_created_at ON app_reviews(created_at);
@@ -211,6 +233,9 @@ export async function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_orders_buyer_id ON orders(buyer_id);
     CREATE INDEX IF NOT EXISTS idx_orders_seller_id ON orders(seller_id);
     CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+    CREATE INDEX IF NOT EXISTS idx_delivery_jobs_order_id ON delivery_jobs(order_id);
+    CREATE INDEX IF NOT EXISTS idx_delivery_jobs_driver_id ON delivery_jobs(driver_id);
+    CREATE INDEX IF NOT EXISTS idx_delivery_jobs_status ON delivery_jobs(status);
     CREATE INDEX IF NOT EXISTS idx_vouchers_code ON vouchers(code);
     CREATE INDEX IF NOT EXISTS idx_promos_code ON promos(code);
   `);

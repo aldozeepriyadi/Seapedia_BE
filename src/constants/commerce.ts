@@ -17,4 +17,12 @@ export const ppnRate = 0.12;
 export const OrderStatus = {
   PACKING: "Sedang Dikemas",
   WAITING_DRIVER: "Menunggu Pengirim",
+  SHIPPING: "Sedang Dikirim",
+  COMPLETED: "Pesanan Selesai",
+} as const;
+
+export const DeliveryJobStatus = {
+  AVAILABLE: "AVAILABLE",
+  TAKEN: "TAKEN",
+  COMPLETED: "COMPLETED",
 } as const;

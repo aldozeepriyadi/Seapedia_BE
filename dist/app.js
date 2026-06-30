@@ -11,8 +11,8 @@ const error_middleware_1 = require("./middleware/error.middleware");
 const routes_1 = require("./routes");
 const allowedOrigins = new Set([
     env_1.env.frontendUrl,
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]);
 function createApp() {
     const app = (0, express_1.default)();
