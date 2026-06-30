@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { Response } from "express";
 import { UserModel } from "../models/user.model";
-import { createToken, toPublicUser } from "../services/auth.service";
+import { createToken, revokeToken, toPublicUser } from "../services/auth.service";
 import { createId } from "../services/id.service";
 import { AuthedRequest } from "../types/auth";
 import {
@@ -21,10 +21,17 @@ export class AuthController {
       return;
     }
 
+    const emailExists = await UserModel.existsByEmail(payload.email);
+    if (emailExists) {
+      res.status(409).json({ message: "Email sudah digunakan." });
+      return;
+    }
+
     const now = new Date().toISOString();
     const user = await UserModel.create({
       id: createId("usr"),
       username,
+      email: payload.email,
       displayName: payload.displayName,
       passwordHash: await bcrypt.hash(payload.password, 10),
       roles: payload.roles,
@@ -101,10 +108,11 @@ export class AuthController {
     });
   }
 
-  static logout(_req: AuthedRequest, res: Response) {
+  static logout(req: AuthedRequest, res: Response) {
+    revokeToken(req.auth!);
     res.json({
       message:
-        "Logout berhasil. Token JWT stateless, jadi client harus menghapus token dari storage.",
+        "Logout berhasil. Token aktif sudah direvoke dan client harus menghapus token dari storage.",
     });
   }
 }

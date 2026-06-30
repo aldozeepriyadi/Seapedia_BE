@@ -3,6 +3,7 @@ import { Role } from "../constants/roles";
 export type StoredUser = {
   id: string;
   username: string;
+  email: string;
   displayName: string;
   passwordHash: string;
   roles: Role[];

@@ -6,6 +6,7 @@ import { StoredUser } from "./database.model";
 type UserRow = {
   id: string;
   username: string;
+  email: string;
   display_name: string;
   password_hash: string;
   roles: Role[] | null;
@@ -17,6 +18,7 @@ function mapUser(row: UserRow): StoredUser {
   return {
     id: row.id,
     username: row.username,
+    email: row.email,
     displayName: row.display_name,
     passwordHash: row.password_hash,
     roles: row.roles ?? [],
@@ -29,6 +31,7 @@ const userSelect = `
   SELECT
     users.id,
     users.username,
+    users.email,
     users.display_name,
     users.password_hash,
     users.created_at,
@@ -70,6 +73,15 @@ export class UserModel {
     return result.rows[0]?.exists ?? false;
   }
 
+  static async existsByEmail(email: string) {
+    const result = await query<{ exists: boolean }>(
+      "SELECT EXISTS (SELECT 1 FROM users WHERE LOWER(email) = LOWER($1)) AS exists",
+      [email],
+    );
+
+    return result.rows[0]?.exists ?? false;
+  }
+
   static async create(user: StoredUser) {
     const client = await pool.connect();
 
@@ -77,11 +89,12 @@ export class UserModel {
       await client.query("BEGIN");
 
       await client.query(
-        `INSERT INTO users (id, username, display_name, password_hash, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
+        `INSERT INTO users (id, username, email, display_name, password_hash, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [
           user.id,
           user.username,
+          user.email,
           user.displayName,
           user.passwordHash,
           user.createdAt,

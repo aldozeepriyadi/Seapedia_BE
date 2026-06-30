@@ -23,6 +23,7 @@ type MonitoringOrderRow = {
 type MonitoringUserRow = {
   id: string;
   username: string;
+  email: string;
   display_name: string;
   roles: string[];
   created_at: Date;
@@ -112,6 +113,7 @@ function mapUser(row: MonitoringUserRow) {
   return {
     id: row.id,
     username: row.username,
+    email: row.email,
     displayName: row.display_name,
     roles: row.roles,
     createdAt: row.created_at.toISOString(),
@@ -190,6 +192,7 @@ export class AdminMonitoringModel {
         `SELECT
           users.id,
           users.username,
+          users.email,
           users.display_name,
           ARRAY_AGG(user_roles.role ORDER BY user_roles.role) AS roles,
           users.created_at
