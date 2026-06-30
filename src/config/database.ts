@@ -1,9 +1,33 @@
 import { Pool, QueryResultRow } from "pg";
 import { env } from "./env";
 
-export const pool = new Pool({
-  connectionString: env.databaseUrl,
-});
+function needsSsl(connectionString: string) {
+  const url = new URL(connectionString);
+  return (
+    url.searchParams.get("sslmode") === "require" ||
+    url.hostname.includes("supabase.co") ||
+    url.hostname.includes("pooler.supabase.com")
+  );
+}
+
+function createPool(connectionString: string) {
+  const url = new URL(connectionString);
+  const ssl = needsSsl(connectionString);
+  url.searchParams.delete("sslmode");
+
+  return new Pool({
+    connectionString: url.toString(),
+    ...(ssl
+      ? {
+          ssl: {
+            rejectUnauthorized: false,
+          },
+        }
+      : {}),
+  });
+}
+
+export const pool = createPool(env.databaseUrl);
 
 export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
@@ -21,9 +45,7 @@ async function ensureDatabaseExists() {
   const maintenanceUrl = new URL(env.databaseUrl);
   maintenanceUrl.pathname = "/postgres";
 
-  const maintenancePool = new Pool({
-    connectionString: maintenanceUrl.toString(),
-  });
+  const maintenancePool = createPool(maintenanceUrl.toString());
 
   try {
     const result = await maintenancePool.query<{ exists: boolean }>(
