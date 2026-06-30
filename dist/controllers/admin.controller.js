@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminController = void 0;
+const admin_monitoring_model_1 = require("../models/admin-monitoring.model");
 const discount_model_1 = require("../models/discount.model");
 const http_error_1 = require("../utils/http-error");
 const admin_validator_1 = require("../validators/admin.validator");
@@ -8,6 +9,23 @@ function isUniqueViolation(error) {
     return typeof error === "object" && error !== null && "code" in error && error.code === "23505";
 }
 class AdminController {
+    static async monitoring(req, res) {
+        const simulatedNow = typeof req.query.simulatedNow === "string" ? new Date(req.query.simulatedNow) : new Date();
+        if (Number.isNaN(simulatedNow.getTime())) {
+            throw new http_error_1.HttpError(400, "simulatedNow tidak valid.");
+        }
+        res.json(await admin_monitoring_model_1.AdminMonitoringModel.snapshot(simulatedNow));
+    }
+    static async runOverdue(req, res) {
+        const body = req.body;
+        const simulatedNow = typeof body.simulatedNow === "string" && body.simulatedNow
+            ? new Date(body.simulatedNow)
+            : new Date();
+        if (Number.isNaN(simulatedNow.getTime())) {
+            throw new http_error_1.HttpError(400, "simulatedNow tidak valid.");
+        }
+        res.json(await admin_monitoring_model_1.AdminMonitoringModel.processOverdue(simulatedNow));
+    }
     static async listVouchers(_req, res) {
         res.json({ vouchers: await discount_model_1.DiscountModel.listVouchers() });
     }

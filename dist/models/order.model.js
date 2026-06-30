@@ -112,12 +112,12 @@ class OrderModel {
     static async sellerReport(sellerId) {
         const result = await (0, database_1.query)(`SELECT
         COUNT(*) AS order_count,
-        COALESCE(SUM(final_total - delivery_fee), 0) AS total_income,
+        COALESCE(SUM(final_total - delivery_fee) FILTER (WHERE status <> $3), 0) AS total_income,
         COALESCE(SUM(discount_amount), 0) AS total_discount,
         COUNT(*) FILTER (WHERE status = $2) AS pending_orders,
         COUNT(*) FILTER (WHERE status <> $2) AS processed_orders
        FROM orders
-       WHERE seller_id = $1`, [sellerId, commerce_1.OrderStatus.PACKING]);
+       WHERE seller_id = $1`, [sellerId, commerce_1.OrderStatus.PACKING, commerce_1.OrderStatus.RETURNED]);
         return {
             orderCount: Number(result.rows[0]?.order_count ?? 0),
             totalIncome: Number(result.rows[0]?.total_income ?? 0),

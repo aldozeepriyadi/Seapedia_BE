@@ -173,7 +173,7 @@ async function initializeDatabase() {
       id TEXT PRIMARY KEY,
       order_id TEXT NOT NULL UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
       driver_id TEXT REFERENCES users(id) ON DELETE SET NULL,
-      status TEXT NOT NULL CHECK (status IN ('AVAILABLE', 'TAKEN', 'COMPLETED')),
+      status TEXT NOT NULL CHECK (status IN ('AVAILABLE', 'TAKEN', 'COMPLETED', 'RETURNED')),
       earning_amount INTEGER NOT NULL DEFAULT 0 CHECK (earning_amount >= 0),
       taken_at TIMESTAMPTZ,
       completed_at TIMESTAMPTZ,
@@ -204,6 +204,9 @@ async function initializeDatabase() {
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_type TEXT;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount INTEGER NOT NULL DEFAULT 0;
     ALTER TABLE orders ADD COLUMN IF NOT EXISTS taxable_amount INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE delivery_jobs DROP CONSTRAINT IF EXISTS delivery_jobs_status_check;
+    ALTER TABLE delivery_jobs ADD CONSTRAINT delivery_jobs_status_check
+      CHECK (status IN ('AVAILABLE', 'TAKEN', 'COMPLETED', 'RETURNED'));
 
     INSERT INTO delivery_jobs (id, order_id, status, earning_amount)
     SELECT

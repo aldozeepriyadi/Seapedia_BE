@@ -19,10 +19,18 @@ export const OrderStatus = {
   WAITING_DRIVER: "Menunggu Pengirim",
   SHIPPING: "Sedang Dikirim",
   COMPLETED: "Pesanan Selesai",
+  RETURNED: "Dikembalikan",
 } as const;
 
 export const DeliveryJobStatus = {
   AVAILABLE: "AVAILABLE",
   TAKEN: "TAKEN",
   COMPLETED: "COMPLETED",
+  RETURNED: "RETURNED",
 } as const;
+
+export const deliverySlaHours: Record<DeliveryMethod, number> = {
+  [DeliveryMethod.INSTANT]: 2,
+  [DeliveryMethod.NEXT_DAY]: 24,
+  [DeliveryMethod.REGULAR]: 72,
+};

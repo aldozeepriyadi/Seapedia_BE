@@ -7,6 +7,8 @@ import { authenticate, requireActiveRole } from "../middleware/auth.middleware";
 export const adminRoutes = Router();
 
 adminRoutes.use(authenticate, requireActiveRole(Role.ADMIN));
+adminRoutes.get("/monitoring", asyncHandler(AdminController.monitoring));
+adminRoutes.post("/overdue/run", asyncHandler(AdminController.runOverdue));
 adminRoutes.get("/vouchers", asyncHandler(AdminController.listVouchers));
 adminRoutes.post("/vouchers", asyncHandler(AdminController.createVoucher));
 adminRoutes.get("/vouchers/:id", asyncHandler(AdminController.showVoucher));

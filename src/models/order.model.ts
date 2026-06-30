@@ -185,13 +185,13 @@ export class OrderModel {
     }>(
       `SELECT
         COUNT(*) AS order_count,
-        COALESCE(SUM(final_total - delivery_fee), 0) AS total_income,
+        COALESCE(SUM(final_total - delivery_fee) FILTER (WHERE status <> $3), 0) AS total_income,
         COALESCE(SUM(discount_amount), 0) AS total_discount,
         COUNT(*) FILTER (WHERE status = $2) AS pending_orders,
         COUNT(*) FILTER (WHERE status <> $2) AS processed_orders
        FROM orders
        WHERE seller_id = $1`,
-      [sellerId, OrderStatus.PACKING],
+      [sellerId, OrderStatus.PACKING, OrderStatus.RETURNED],
     );
 
     return {

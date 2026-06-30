@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { AdminMonitoringModel } from "../models/admin-monitoring.model";
 import { DiscountModel } from "../models/discount.model";
 import { AuthedRequest } from "../types/auth";
 import { HttpError } from "../utils/http-error";
@@ -9,6 +10,31 @@ function isUniqueViolation(error: unknown) {
 }
 
 export class AdminController {
+  static async monitoring(req: AuthedRequest, res: Response) {
+    const simulatedNow =
+      typeof req.query.simulatedNow === "string" ? new Date(req.query.simulatedNow) : new Date();
+
+    if (Number.isNaN(simulatedNow.getTime())) {
+      throw new HttpError(400, "simulatedNow tidak valid.");
+    }
+
+    res.json(await AdminMonitoringModel.snapshot(simulatedNow));
+  }
+
+  static async runOverdue(req: AuthedRequest, res: Response) {
+    const body = req.body as { simulatedNow?: unknown };
+    const simulatedNow =
+      typeof body.simulatedNow === "string" && body.simulatedNow
+        ? new Date(body.simulatedNow)
+        : new Date();
+
+    if (Number.isNaN(simulatedNow.getTime())) {
+      throw new HttpError(400, "simulatedNow tidak valid.");
+    }
+
+    res.json(await AdminMonitoringModel.processOverdue(simulatedNow));
+  }
+
   static async listVouchers(_req: AuthedRequest, res: Response) {
     res.json({ vouchers: await DiscountModel.listVouchers() });
   }

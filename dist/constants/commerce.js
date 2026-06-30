@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DeliveryJobStatus = exports.OrderStatus = exports.ppnRate = exports.deliveryFees = exports.DeliveryMethod = void 0;
+exports.deliverySlaHours = exports.DeliveryJobStatus = exports.OrderStatus = exports.ppnRate = exports.deliveryFees = exports.DeliveryMethod = void 0;
 exports.DeliveryMethod = {
     INSTANT: "Instant",
     NEXT_DAY: "Next Day",
@@ -17,9 +17,16 @@ exports.OrderStatus = {
     WAITING_DRIVER: "Menunggu Pengirim",
     SHIPPING: "Sedang Dikirim",
     COMPLETED: "Pesanan Selesai",
+    RETURNED: "Dikembalikan",
 };
 exports.DeliveryJobStatus = {
     AVAILABLE: "AVAILABLE",
     TAKEN: "TAKEN",
     COMPLETED: "COMPLETED",
+    RETURNED: "RETURNED",
+};
+exports.deliverySlaHours = {
+    [exports.DeliveryMethod.INSTANT]: 2,
+    [exports.DeliveryMethod.NEXT_DAY]: 24,
+    [exports.DeliveryMethod.REGULAR]: 72,
 };
