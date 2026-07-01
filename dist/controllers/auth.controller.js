@@ -44,14 +44,14 @@ class AuthController {
     }
     static async login(req, res) {
         const payload = auth_validator_1.loginSchema.parse(req.body);
-        const user = await user_model_1.UserModel.findByUsername(payload.username.toLowerCase());
+        const user = await user_model_1.UserModel.findByUsernameOrEmail(payload.username);
         if (!user) {
-            res.status(401).json({ message: "Username atau password salah." });
+            res.status(401).json({ message: "Username/email atau password salah." });
             return;
         }
         const passwordMatches = await bcrypt_1.default.compare(payload.password, user.passwordHash);
         if (!passwordMatches) {
-            res.status(401).json({ message: "Username atau password salah." });
+            res.status(401).json({ message: "Username/email atau password salah." });
             return;
         }
         const activeRole = null;

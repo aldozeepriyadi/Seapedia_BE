@@ -109,6 +109,8 @@ Seed discount:
 - Voucher: `WELCOME50`
 - Promo: `PROMO25`
 
+Login menerima username atau email. Contoh: `admin` dan `admin@seapedia.test` sama-sama valid untuk akun admin.
+
 ## API Summary
 
 Public:
@@ -126,7 +128,7 @@ Auth:
 | Method | Path | Fungsi |
 | --- | --- | --- |
 | POST | `/api/auth/register` | Register user non-admin |
-| POST | `/api/auth/login` | Login user |
+| POST | `/api/auth/login` | Login user dengan username atau email |
 | GET | `/api/auth/me` | Ambil profile dari token |
 | POST | `/api/auth/select-role` | Pilih active role |
 | POST | `/api/auth/logout` | Revoke token dan logout |

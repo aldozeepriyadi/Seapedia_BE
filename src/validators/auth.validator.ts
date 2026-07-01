@@ -37,7 +37,11 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  username: z.string().trim().min(1),
+  username: z
+    .string()
+    .trim()
+    .min(1, "Username atau email wajib diisi.")
+    .max(120, "Username atau email maksimal 120 karakter."),
   password: z.string().min(1),
 });
 

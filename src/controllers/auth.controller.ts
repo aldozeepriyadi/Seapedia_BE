@@ -51,17 +51,17 @@ export class AuthController {
 
   static async login(req: AuthedRequest, res: Response) {
     const payload = loginSchema.parse(req.body);
-    const user = await UserModel.findByUsername(payload.username.toLowerCase());
+    const user = await UserModel.findByUsernameOrEmail(payload.username);
 
     if (!user) {
-      res.status(401).json({ message: "Username atau password salah." });
+      res.status(401).json({ message: "Username/email atau password salah." });
       return;
     }
 
     const passwordMatches = await bcrypt.compare(payload.password, user.passwordHash);
 
     if (!passwordMatches) {
-      res.status(401).json({ message: "Username atau password salah." });
+      res.status(401).json({ message: "Username/email atau password salah." });
       return;
     }
 

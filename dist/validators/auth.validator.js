@@ -34,7 +34,11 @@ exports.registerSchema = zod_1.z.object({
         .default([roles_1.Role.BUYER]),
 });
 exports.loginSchema = zod_1.z.object({
-    username: zod_1.z.string().trim().min(1),
+    username: zod_1.z
+        .string()
+        .trim()
+        .min(1, "Username atau email wajib diisi.")
+        .max(120, "Username atau email maksimal 120 karakter."),
     password: zod_1.z.string().min(1),
 });
 exports.selectRoleSchema = zod_1.z.object({

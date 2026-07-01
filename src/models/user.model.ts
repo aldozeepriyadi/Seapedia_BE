@@ -53,6 +53,18 @@ export class UserModel {
     return result.rows[0] ? mapUser(result.rows[0]) : null;
   }
 
+  static async findByUsernameOrEmail(identifier: string) {
+    const result = await query<UserRow>(
+      `${userSelect}
+       WHERE LOWER(users.username) = LOWER($1)
+          OR LOWER(users.email) = LOWER($1)
+       GROUP BY users.id`,
+      [identifier],
+    );
+
+    return result.rows[0] ? mapUser(result.rows[0]) : null;
+  }
+
   static async findById(id: string) {
     const result = await query<UserRow>(
       `${userSelect}
